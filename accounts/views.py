@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 from .forms import SignUpForm, LoginForm
 from django.contrib.auth.decorators import login_required
-
+from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import PermissionDenied
 
 User = get_user_model()
 
@@ -13,6 +13,14 @@ def acceuil_view(request):
     """Vue pour la page d'accueil"""
     return render(request, 'accounts/acceuil.html')
 
+
+@csrf_exempt
+def user_logout(request):
+    logout(request)
+    messages.success(request, "Vous avez été déconnecté avec succès.")
+    return redirect('accounts:login')  # Redirige vers la page de connexion
+
+@csrf_exempt
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST, request.FILES)
@@ -30,18 +38,16 @@ def signup(request):
                 if 'photo' in request.FILES:
                     profile.photo = request.FILES['photo']
                 
-                profile.is_admin = form.cleaned_data['is_admin']
+                profile.is_admin = form.cleaned_data.get('is_admin', False)
                 profile.save()
                 
                 messages.success(request, "Inscription réussie ! Veuillez vous connecter.")
-                return redirect('accounts:login')  # Assurez-vous que ce nom d'URL est correct
+                return redirect('accounts:login')
             
             except Exception as e:
                 messages.error(request, f"Erreur lors de l'inscription : {str(e)}")
-                # Ajoutez ceci pour déboguer
                 print(f"Erreur inscription: {str(e)}")
         else:
-            # Affichez les erreurs de formulaire
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -50,6 +56,7 @@ def signup(request):
     
     return render(request, 'accounts/signup.html', {'form': form})
 
+@csrf_exempt
 def user_login(request):
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
@@ -60,9 +67,11 @@ def user_login(request):
             
             if user is not None:
                 login(request, user)
-                if user.profile.is_admin:
-                    return redirect('transport:admin_dashboard')
-                return redirect(reverse('transport:transport_list'))  # Utilise le namespace
+                messages.success(request, "Connexion réussie.")
+                
+                if hasattr(user, 'profile') and user.profile.is_admin:
+                    return redirect('accounts:admin_dashboard')  # Corrected here
+                return redirect('transport:transport_list')  # Ensure this exists
             else:
                 messages.error(request, 'Identifiants invalides')
         else:
@@ -72,14 +81,12 @@ def user_login(request):
     
     return render(request, 'accounts/login.html', {'form': form})
 
-def user_logout(request):
-    logout(request)
-    messages.success(request, "Vous avez été déconnecté avec succès.")
-    return redirect('accounts:login')
 
-
-
-
-@login_required
+@login_required(login_url='accounts:login')
 def admin_dashboard(request):
-    return render(request, 'admin/dashboard.html')  # Assurez-vous que le template existe
+    if not request.user.profile.is_admin:
+        raise PermissionDenied
+    return render(request, 'transport/admin_dashboard.html')
+
+
+

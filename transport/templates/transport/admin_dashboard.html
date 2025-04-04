@@ -1,27 +1,80 @@
-{% extends 'transports/base.html' %}
-<link rel="stylesheet" href="{% static 'transport/css/style.css' %}">
-<link rel="stylesheet" href="{% static 'transport/css/reservation.css' %}">
-
+{% extends 'transport/base.html' %}
+{% load static %}
 
 {% block title %}Tableau de bord Admin{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/reservation.css' %}">
+
 <h1>Tableau de bord Admin</h1>
 
 <h2>Transports</h2>
 <ul class="transport-list">
     {% for transport in transports %}
         <li class="transport-item">
-            <h3>{{ transport.name }} ({{ transport.get_type_display() }})</h3>
-            <p>Classe : {{ transport.get_classe_display() }}</p>
-            <p>Destination : {{ transport.destination }}</p>
+            <h3>{{ transport.name }} ({{ transport.get_type_display }})</h3>
+            <p>Classe : {{ transport.get_classe_display }}</p>
+            <p>Destination : {{ transport.arrival_city }}</p>
+            <p>Départ : {{ transport.departure_city }}</p>
             <p>Départ : {{ transport.departure_time }}</p>
             <p>Arrivée : {{ transport.arrival_time }}</p>
             <p>Prix : {{ transport.price }} €</p>
             <p>Places disponibles : {{ transport.available_seats }}</p>
+            <a href="{% url 'transport:edit_transport' transport.id %}">Modifier</a>
+            <form action="{% url 'transport:delete_transport' transport.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Supprimer</button>
+            </form>
         </li>
     {% endfor %}
 </ul>
+
+<h2>Ajouter un nouveau transport</h2>
+<form action="{% url 'transport:add_transport' %}" method="post">
+    {% csrf_token %}
+    <label for="name">Nom:</label>
+    <input type="text" name="name" required>
+
+    <label for="description">Description:</label>
+    <textarea name="description" required></textarea>
+
+    <label for="type">Type:</label>
+    <select name="type" required>
+        {% for type in transport_types %}
+            <option value="{{ type.0 }}">{{ type.1 }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="classe">Classe:</label>
+    <select name="classe" required>
+        {% for classe in transport_classes %}
+            <option value="{{ classe.0 }}">{{ classe.1 }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="capacity">Capacité:</label>
+    <input type="number" name="capacity" required>
+
+    <label for="available_seats">Places disponibles:</label>
+    <input type="number" name="available_seats" required>
+
+    <label for="departure_city">Ville de départ:</label>
+    <input type="text" name="departure_city" required>
+
+    <label for="arrival_city">Ville d'arrivée:</label>
+    <input type="text" name="arrival_city" required>
+
+    <label for="departure_time">Départ:</label>
+    <input type="datetime-local" name="departure_time" required>
+
+    <label for="arrival_time">Arrivée:</label>
+    <input type="datetime-local" name="arrival_time" required>
+
+    <label for="price">Prix:</label>
+    <input type="number" step="0.01" name="price" required>
+
+    <button type="submit">Ajouter</button>
+</form>
 
 <h2>Réservations</h2>
 <ul class="reservation-list">
@@ -31,6 +84,7 @@
             <p>Client : {{ reservation.client.username }}</p>
             <p>Date de réservation : {{ reservation.reservation_date }}</p>
             <p>Nombre de places : {{ reservation.number_of_seats }}</p>
+            <p>Status : {{ reservation.get_status_display }}</p>
             <p>Noms des passagers : {{ reservation.passenger_names }}</p>
         </li>
     {% endfor %}

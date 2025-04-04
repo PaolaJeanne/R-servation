@@ -23,3 +23,11 @@ class ReservationForm(forms.ModelForm):
         if seats is None or seats < 1:
             raise forms.ValidationError("Le nombre de places doit être au moins 1")
         return seats
+    
+    
+from .models import Transport
+
+class TransportForm(forms.ModelForm):
+    class Meta:
+        model = Transport
+        fields = ['name', 'description', 'type', 'classe', 'capacity', 'available_seats', 'departure_city', 'arrival_city', 'departure_time', 'arrival_time', 'price']

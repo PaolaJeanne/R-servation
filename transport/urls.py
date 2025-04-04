@@ -15,4 +15,7 @@ urlpatterns = [
     path('my-reservations/', views.my_reservations, name='my_reservations'),
     path('update-reservation/<int:reservation_id>/', views.update_reservation, name='update_reservation'),
     path('cancel-reservation/<int:reservation_id>/', views.cancel_reservation, name='cancel_reservation'),
+    path('admin/transport/add/', views.add_transport, name='add_transport'),  # Ajoutez cette ligne
+    path('admin/transport/edit/<int:id>/', views.edit_transport, name='edit_transport'),
+    path('admin/transport/delete/<int:id>/', views.delete_transport, name='delete_transport'),
 ]

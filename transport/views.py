@@ -165,3 +165,45 @@ def my_reservations(request):
     return render(request, 'transport/my_reservations.html', {
         'reservations': reservations,
     })
+    
+
+from .forms import TransportForm
+
+def add_transport(request):
+    if request.method == 'POST':
+        form = TransportForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('transport:admin_dashboard')  # Redirige vers le tableau de bord après ajout
+    else:
+        form = TransportForm()
+    
+    return render(request, 'transport/add_transport.html', {'form': form})
+
+from django.shortcuts import get_object_or_404
+
+def edit_transport(request, id):
+    transport = get_object_or_404(Transport, id=id)
+    
+    if request.method == 'POST':
+        form = TransportForm(request.POST, instance=transport)
+        if form.is_valid():
+            form.save()
+            return redirect('transport:admin_dashboard')  # Redirige vers le tableau de bord après modification
+    else:
+        form = TransportForm(instance=transport)
+    
+    return render(request, 'transport/edit_transport.html', {'form': form, 'transport': transport})
+
+
+from django.contrib import messages
+
+def delete_transport(request, id):
+    transport = get_object_or_404(Transport, id=id)
+    
+    if request.method == 'POST':
+        transport.delete()
+        messages.success(request, "Transport supprimé avec succès.")
+        return redirect('transport:admin_dashboard')  # Redirige vers le tableau de bord après suppression
+    
+    return render(request, 'transport/delete_transport.html', {'transport': transport})
