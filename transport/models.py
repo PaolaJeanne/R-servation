@@ -34,6 +34,7 @@ class Transport(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     departure_city = models.CharField(max_length=100)
     arrival_city = models.CharField(max_length=100)
+    
 
     class Meta:
         ordering = ['departure_time']

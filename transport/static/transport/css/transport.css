@@ -1,60 +1,193 @@
-/* Conteneur principal */
+/* ======= BASE STYLES ======= */
+:root {
+    --primary: #3498db;
+    --primary-dark: #2980b9;
+    --secondary: #6c757d;
+    --success: #2ecc71;
+    --success-dark: #27ae60;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --border-radius: 4px;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* ======= FORM CONTAINER ======= */
 .container {
-    max-width: 600px; /* Largeur maximale */
-    margin: 0 auto; /* Centrage horizontal */
-    padding: 20px; /* Espacement interne */
-    border: 1px solid #ddd; /* Bordure grise */
-    border-radius: 8px; /* Coins arrondis */
-    background-color: #f9f9f9; /* Fond clair */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Ombre légère pour profondeur */
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
 }
 
-/* Styles des titres */
-h1 {
-    font-size: 24px; /* Taille du texte */
-    margin-bottom: 20px; /* Espacement en dessous */
-    color: #333; /* Couleur du texte */
+h2 {
+    color: var(--dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+    font-size: 1.8rem;
 }
 
-/* Styles du formulaire */
-.form {
-    display: flex; /* Affichage flexible */
-    flex-direction: column; /* Colonne pour les éléments */
+/* ======= FORM STYLES ======= */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-/* Actions du formulaire */
-.form-actions {
-    margin-top: 20px; /* Espacement en haut */
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-/* Styles des boutons */
+form p {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+}
+
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+input[type="file"],
+select,
+textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="datetime-local"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* ======= BUTTON STYLES ======= */
 .btn {
-    padding: 10px 15px; /* Espacement interne */
-    font-size: 16px; /* Taille du texte */
-    border: none; /* Pas de bordure par défaut */
-    border-radius: 5px; /* Coins arrondis */
-    cursor: pointer; /* Curseur pointer sur hover */
-    margin-right: 10px; /* Espacement à droite */
-    transition: background-color 0.3s; /* Effet de transition pour le hover */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
 }
 
-/* Couleurs des boutons */
 .btn-primary {
-    background-color: #007bff; /* Bleu */
-    color: white; /* Texte blanc */
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
 }
 
 .btn-secondary {
-    background-color: #6c757d; /* Gris */
-    color: white; /* Texte blanc */
+    background-color: var(--secondary);
+    color: white;
+    margin-left: 1rem;
 }
 
-.btn-danger {
-    background-color: #dc3545; /* Rouge */
-    color: white; /* Texte blanc */
+.btn-secondary:hover {
+    background-color: #5a6268;
 }
 
-/* Styles pour le hover */
-.btn:hover {
-    opacity: 0.8; /* Légère transparence au survol */
+/* ======= FORM ERRORS ======= */
+.errorlist {
+    color: #dc3545;
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+    list-style-type: none;
+}
+
+/* ======= RESPONSIVE ADJUSTMENTS ======= */
+@media (max-width: 768px) {
+    .container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    form p {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-secondary {
+        margin-left: 0;
+    }
+}
+
+/* ======= FORM LAYOUT IMPROVEMENTS ======= */
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-row p {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* ======= FILE INPUT STYLING ======= */
+.file-input-container {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-input-container input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.custom-file-label {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+.custom-file-label:hover {
+    background-color: #dde0e3;
 }

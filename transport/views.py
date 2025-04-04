@@ -174,13 +174,12 @@ def add_transport(request):
         form = TransportForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('transport:admin_dashboard')  # Redirige vers le tableau de bord après ajout
+        return redirect('accounts:admin_dashboard')  # Utilisez 'accounts:' partout
     else:
         form = TransportForm()
     
     return render(request, 'transport/add_transport.html', {'form': form})
 
-from django.shortcuts import get_object_or_404
 
 def edit_transport(request, id):
     transport = get_object_or_404(Transport, id=id)
@@ -189,7 +188,7 @@ def edit_transport(request, id):
         form = TransportForm(request.POST, instance=transport)
         if form.is_valid():
             form.save()
-            return redirect('transport:admin_dashboard')  # Redirige vers le tableau de bord après modification
+        return redirect('accounts:admin_dashboard')  # Utilisez 'accounts:' partout
     else:
         form = TransportForm(instance=transport)
     
@@ -204,6 +203,6 @@ def delete_transport(request, id):
     if request.method == 'POST':
         transport.delete()
         messages.success(request, "Transport supprimé avec succès.")
-        return redirect('transport:admin_dashboard')  # Redirige vers le tableau de bord après suppression
+    return redirect('accounts:admin_dashboard')  # Utilisez 'accounts:' partout
     
     return render(request, 'transport/delete_transport.html', {'transport': transport})
