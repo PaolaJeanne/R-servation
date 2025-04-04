@@ -1,0 +1,91 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block title %}Réserver {{ transport.name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/reservation.css' %}">
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-ticket-alt me-2"></i>
+                        Réservation pour {{ transport.name }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if not can_reserve %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Ce transport n'a plus de places disponibles
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <h5>Détails du transport</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Type:</strong> {{ transport.get_type_display }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Classe:</strong> {{ transport.get_classe_display }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Prix unitaire:</strong> {{ transport.price }} fcfa
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Places disponibles:</strong> {{ transport.available_seats }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Départ:</strong> {{ transport.departure_time|date:"d/m/Y H:i" }}
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.number_of_seats.id_for_label }}" class="form-label">
+                                Nombre de places
+                            </label>
+                            {{ form.number_of_seats }}
+                            {% if form.number_of_seats.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.number_of_seats.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.passenger_names.id_for_label }}" class="form-label">
+                                Noms des passagers (séparés par des virgules)
+                            </label>
+                            {{ form.passenger_names }}
+                            {% if form.passenger_names.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.passenger_names.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" {% if not can_reserve %}disabled{% endif %}>
+                                <i class="fas fa-check-circle me-2"></i>
+                                Confirmer la réservation
+                            </button>
+                            <a href="{% url 'transport:transport_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Retour à la liste
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

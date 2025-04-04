@@ -1,0 +1,27 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block title %}Erreur de Paiement{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/error_payment.css' %}">
+<div class="payment-error">
+    <h1>Erreur de Paiement</h1>
+    <div class="error-icon">
+        <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <p class="error-message">{{ error|default:"Une erreur est survenue lors du traitement de votre paiement." }}</p>
+    
+    {% if reservation %}
+    <div class="actions">
+        <a href="{% url 'transport:create_payment' reservation.id %}" class="btn btn-retry">
+            Réessayer le paiement
+        </a>
+    {% endif %}
+    
+    <a href="{% url 'transport:transport_list' %}" class="btn btn-primary">
+        Retour à la liste des transports
+    </a>
+    </div>
+</div>
+{% endblock %}

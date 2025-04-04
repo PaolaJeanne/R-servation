@@ -1,0 +1,31 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Déconnexion - Agence de Transport{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-sign-out-alt auth-icon"></i>
+            <h2>Déconnexion</h2>
+        </div>
+        
+        <div class="auth-body text-center">
+            <div class="logout-message mb-4">
+                <p>Vous avez été déconnecté avec succès.</p>
+                <p>Merci pour votre visite.</p>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>Se reconnecter
+                </a>
+                <a href="{% url 'transport:transport_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-home me-2"></i>Retour à l'accueil
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

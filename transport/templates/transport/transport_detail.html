@@ -1,0 +1,73 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block title %}Détails {{ transport.name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/detail.css' %}">
+
+<div class="container">
+    <div class="transport-detail-card">
+        <h1>{{ transport.name }}</h1>
+        
+        <div class="detail-section">
+            <h2>Informations</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Type:</span>
+                    <span class="detail-value">{{ transport.get_type_display }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Classe:</span>
+                    <span class="detail-value">{{ transport.get_classe_display }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Destination:</span>
+                    <span class="detail-value">{{ transport.destination }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Prix:</span>
+                    <span class="detail-value">{{ transport.price }} €</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Places disponibles:</span>
+                    <span class="detail-value">{{ transport.available_seats }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h2>Horaires</h2>
+            <div class="schedule-grid">
+                <div class="schedule-item departure">
+                    <span class="schedule-label">Départ:</span>
+                    <time datetime="{{ transport.departure_time|date:'c' }}" class="schedule-time">
+                        {{ transport.departure_time|date:"d/m/Y H:i" }}
+                    </time>
+                </div>
+                <div class="schedule-item arrival">
+                    <span class="schedule-label">Arrivée:</span>
+                    <time datetime="{{ transport.arrival_time|date:'c' }}" class="schedule-time">
+                        {{ transport.arrival_time|date:"d/m/Y H:i" }}
+                    </time>
+                </div>
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h2>Description</h2>
+            <p>{{ transport.description }}</p>
+        </div>
+        
+        {% if can_reserve %}
+            <a href="{% url 'transport:reserve_transport' transport.id %}" class="btn btn-primary btn-reserve">
+                Réserver maintenant
+            </a>
+        {% else %}
+            <div class="alert alert-warning">
+                Ce transport est complet
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'transport/css/create_payment.css' %}">
+
+<div class="container">
+  <div class="card">
+    <h1 class="card-title">Finaliser votre paiement</h1>
+    
+    <div class="payment-summary">
+      <h3>Récapitulatif de la réservation</h3>
+      <div class="payment-summary-item">
+        <span>Réservation #</span>
+        <span>{{ reservation.id }}</span>
+      </div>
+      <div class="payment-summary-item">
+        <span>Transport</span>
+        <span>{{ reservation.transport.name }}</span>
+      </div>
+      <div class="payment-summary-item">
+        <span>Nombre de places</span>
+        <span>{{ reservation.number_of_seats }}</span>
+      </div>
+      <div class="payment-summary-item">
+        <span>Date de départ</span>
+        <span>{{ reservation.departure_time|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="payment-summary-total">
+        <span>Total à payer</span>
+        <span>{{ reservation.total_amount }} FCFA</span>
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'transport:process_payment' reservation.id %}">
+      {% csrf_token %}
+      
+      <h3>Choisissez votre méthode de paiement</h3>
+      
+      <div class="payment-methods">
+        <label class="payment-method">
+          <input type="radio" name="payment_method" value="orange" required checked>
+          <div class="payment-icon">📱</div>
+          <div>Orange Money</div>
+        </label>
+        
+        <label class="payment-method">
+          <input type="radio" name="payment_method" value="mtn">
+          <div class="payment-icon">📱</div>
+          <div>MTN Mobile Money</div>
+        </label>
+        
+        <label class="payment-method">
+          <input type="radio" name="payment_method" value="wave">
+          <div class="payment-icon">💳</div>
+          <div>Wave</div>
+        </label>
+        
+        <label class="payment-method">
+          <input type="radio" name="payment_method" value="visa">
+          <div class="payment-icon">💳</div>
+          <div>Carte Visa</div>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="phone_number" class="form-label">Numéro de téléphone (pour mobile money)</label>
+        <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+               placeholder="Ex: 771234567" pattern="[0-9]{9}" title="9 chiffres sans espaces">
+      </div>
+
+      <div class="form-group" id="card-fields" style="display: none;">
+        <label for="card_number" class="form-label">Numéro de carte</label>
+        <input type="text" class="form-control" id="card_number" name="card_number" 
+               placeholder="1234 5678 9012 3456">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+          <div>
+            <label for="expiry_date" class="form-label">Date d'expiration</label>
+            <input type="text" class="form-control" id="expiry_date" name="expiry_date" 
+                   placeholder="MM/AA">
+          </div>
+          <div>
+            <label for="cvv" class="form-label">CVV</label>
+            <input type="text" class="form-control" id="cvv" name="cvv" 
+                   placeholder="123" maxlength="3">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1rem;">
+        Payer {{ reservation.total_amount }} FCFA
+      </button>
+      
+      <a href="{% url 'transport:reservation_detail' reservation.id %}" class="btn btn-secondary" style="margin-top: 0.5rem; width: 100%;">
+        Retour
+      </a>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const paymentMethods = document.querySelectorAll('.payment-method input[type="radio"]');
+  const phoneField = document.querySelector('#phone_number');
+  const cardFields = document.querySelector('#card-fields');
+  
+  // Gérer l'affichage des champs en fonction de la méthode de paiement
+  paymentMethods.forEach(method => {
+    method.addEventListener('change', function() {
+      if (this.value === 'visa') {
+        cardFields.style.display = 'block';
+        phoneField.required = false;
+      } else {
+        cardFields.style.display = 'none';
+        phoneField.required = true;
+      }
+      
+      // Mettre en surbrillance la méthode sélectionnée
+      document.querySelectorAll('.payment-method').forEach(el => {
+        el.classList.remove('selected');
+      });
+      this.closest('.payment-method').classList.add('selected');
+    });
+  });
+  
+  // Formatage automatique des champs de carte
+  const cardNumber = document.getElementById('card_number');
+  const expiryDate = document.getElementById('expiry_date');
+  
+  cardNumber.addEventListener('input', function(e) {
+    this.value = this.value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
+  });
+  
+  expiryDate.addEventListener('input', function(e) {
+    this.value = this.value.replace(/\D/g, '').replace(/(\d{2})(\d{0,2})/, '$1/$2').trim();
+  });
+});
+</script>
+{% endblock %}

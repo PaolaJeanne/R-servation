@@ -1,0 +1,24 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block title %}Paiement Annulé{% endblock %}
+
+<link rel="stylesheet" href="{% static 'transport/css/payment.css' %}">
+
+{% block content %}
+<div class="card">
+    <div class="alert alert-danger">
+        <h2>Paiement annulé</h2>
+        <p>Votre paiement pour la réservation #{{ reservation.id }} a été annulé.</p>
+        
+        <div class="mt-4">
+            <a href="{% url 'transport:create_payment' reservation.id %}" class="btn btn-primary">
+                Réessayer le paiement
+            </a>
+            <a href="{% url 'transport:reservation_detail' reservation.id %}" class="btn btn-secondary">
+                Retour aux détails de la réservation
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

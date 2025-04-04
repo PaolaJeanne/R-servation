@@ -1,0 +1,49 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block title %}Modifier la Réservation{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/update_reservation.css' %}">
+
+<div class="reservation-update-container">
+    <div class="update-header">
+        <h1><i class="fas fa-edit"></i> Modifier la Réservation</h1>
+        <p class="transport-info">Transport: {{ reservation.transport.name }}</p>
+    </div>
+
+    <form method="post" class="reservation-update-form">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.name == 'departure_time' or field.name == 'arrival_time' %}
+                    <div class="time-input-group">
+                        <input type="datetime-local" name="{{ field.name }}" id="{{ field.id_for_label }}" value="{{ field.value|date:'Y-m-d\TH:i' }}" class="form-control" required>
+                        <div class="time-label">{{ field.label }}</div>
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% if field.help_text %}
+                <small class="form-help">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+            <a href="{% url 'transport:my_reservations' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

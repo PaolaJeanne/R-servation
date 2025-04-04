@@ -1,0 +1,31 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+{% block title %}Paiement Réussi{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/payment.css' %}">
+
+<div class="card">
+    <div class="alert alert-success">
+        <h2>Paiement réussi!</h2>
+        <p>Votre paiement pour la réservation #{{ reservation.id }} a été effectué avec succès.</p>
+        
+        <div class="mt-4">
+            <h4>Détails du paiement</h4>
+            <p><strong>Méthode:</strong> {{ payment.get_method_display }}</p>
+            <p><strong>Montant:</strong> {{ payment.amount }} FCFA</p>
+            <p><strong>Date:</strong> {{ payment.created_at }}</p>
+            <p><strong>Référence:</strong> {{ payment.transaction_id }}</p>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'transport:reservation_detail' reservation.id %}" class="btn btn-primary">
+                Voir les détails de la réservation
+            </a>
+            <a href="{% url 'transport:transport_list' %}" class="btn btn-secondary">
+                Retour à la liste des transports
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

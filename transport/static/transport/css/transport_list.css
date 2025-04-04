@@ -1,0 +1,129 @@
+/* Styles généraux */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* Titres */
+h1 {
+  color: #007bff;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Cartes */
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: white;
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.card-body {
+  padding: 15px;
+}
+
+.card-title {
+  font-weight: bold;
+}
+
+/* Liste de groupe */
+.list-group-item {
+  font-size: 0.9rem;
+}
+
+/* Boutons */
+.btn {
+  transition: background-color 0.3s, color 0.3s;
+  border-radius: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-outline-secondary {
+  color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success.disabled {
+  background-color: #ccc;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.pagination .step-links {
+  display: flex;
+  align-items: center;
+}
+
+.pagination .btn-link {
+  margin: 0 10px;
+  color: #007bff;
+  font-size: 1.2rem; /* Augmente la taille des icônes */
+}
+
+.pagination .btn-link:hover {
+  text-decoration: underline;
+}
+
+/* Alertes */
+.alert {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Formulaires */
+.form-label {
+  margin-bottom: 0.5rem;
+}
+
+.form-select, .form-control {
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card {
+      margin-bottom: 20px;
+  }
+}

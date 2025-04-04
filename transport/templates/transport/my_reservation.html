@@ -1,0 +1,83 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/reservation.css' %}">
+
+<div class="reservation-container">
+    <h1 class="reservation-title">Mes Réservations</h1>
+    
+    {% if not reservations %}
+        <div class="no-reservations">
+            <p>Vous n'avez aucune réservation active pour le moment.</p>
+            <a href="{% url 'transport:transport_list' %}" class="btn btn-primary">
+                Voir les transports disponibles
+            </a>
+        </div>
+    {% else %}
+        <div class="reservation-grid">
+            {% for reservation in reservations %}
+            {% if reservation.status != 'cancelled' %}
+            <div class="reservation-card {% if not reservation.is_paid %}unpaid{% endif %}">
+                <div class="card-header">
+                    <h2><a href="{% url 'transport:reservation_detail' reservation.id %}">{{ reservation.transport.get_type_display }} - {{ reservation.transport.name }}</a></h2>
+                    <span class="badge {% if reservation.is_paid %}badge-success{% else %}badge-warning{% endif %}">
+                        {% if reservation.is_paid %}Payé{% else %}En attente{% endif %}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="reservation-detail">
+                        <span class="detail-label">Date réservation:</span>
+                        <span>{{ reservation.reservation_date|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    
+                    <div class="reservation-detail">
+                        <span class="detail-label">Départ:</span>
+                        <span>{{ reservation.departure_time }}</span>
+                    </div>
+                    
+                    <div class="reservation-detail">
+                        <span class="detail-label">Arrivée:</span>
+                        <span>{{ reservation.arrival_time }}</span>
+                    </div>
+                    
+                    <div class="reservation-detail">
+                        <span class="detail-label">Places:</span>
+                        <span>{{ reservation.number_of_seats }}</span>
+                    </div>
+                    
+                    <div class="reservation-detail">
+                        <span class="detail-label">Passagers:</span>
+                        <span>{{ reservation.passenger_names }}</span>
+                    </div>
+                    
+                    <div class="reservation-detail">
+                        <span class="detail-label">Prix total:</span>
+                        <span>{{ reservation.get_total_price }} €</span>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    {% if not reservation.is_paid %}
+                        <a href="{% url 'transport:create_payment' reservation.id %}" class="btn btn-pay">
+                            Payer
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'transport:update_reservation' reservation.id %}" class="btn btn-update">
+                        Modifier
+                    </a>
+                    
+                    <a href="{% url 'transport:cancel_reservation' reservation.id %}" class="btn btn-cancel">
+                        Annuler
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

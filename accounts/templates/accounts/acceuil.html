@@ -1,0 +1,34 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Accueil - Agence de Transport{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/acceuil.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="homepage">
+    <header class="hero-section">
+        <div class="container text-center">
+            <h1>Bienvenue chez nous</h1>
+            <h2>Trouvez votre prochain voyage</h2>
+            <p>Recherchez des offres sur les agences de transports</p>
+            
+            <div class="mission-box">
+                <h2>Notre Mission</h2>
+                <p>
+                    Nous nous engageons à fournir les meilleurs services à nos clients.
+                    Découvrez nos offres et services adaptés à vos besoins.
+                </p>
+                <div class="view">
+                    <!-- Modification ici pour rediriger vers signup -->
+                    <a href="{% url 'accounts:signup' %}" class="btn-view-more">
+                        Voir plus
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+</div>
+{% endblock %}

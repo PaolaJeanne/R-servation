@@ -1,0 +1,148 @@
+{% extends 'transport/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'transport/css/transport_list.css' %}">
+
+<div class="container">
+    <h1 class="my-4">Transports Disponibles</h1>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-filter me-2"></i>Filtrer les résultats
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="type" class="form-label">Type de transport</label>
+                    <select name="type" id="type" class="form-select">
+                        <option value="">Types</option>
+                        {% for value, label in type_choices %}
+                            <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="classe" class="form-label">Classe</label>
+                    <select name="classe" id="classe" class="form-select">
+                        <option value="">Classes</option>
+                        {% for value, label in classe_choices %}
+                            <option value="{{ value }}" {% if selected_classe == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="submit" class="btn btn-primary me-md-2">
+                            <i class="fas fa-search me-1"></i> Filtrer
+                        </button>
+                        <a href="{% url 'transport:transport_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-1"></i> Réinitialiser
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats -->
+    {% if page_obj %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for transport in page_obj %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header 
+                        {% if transport.classe == 'vip' %}bg-warning
+                        {% elif transport.classe == 'luxe' %}bg-danger
+                        {% else %}bg-primary{% endif %} text-white">
+                        <h5 class="card-title mb-1">{{ transport.name }}</h5>
+                        <div class="d-flex justify-content-between small">
+                            <span><i class="fas fa-{{ transport.type }} me-1"></i> {{ transport.get_type_display }}</span>
+                            <span>{{ transport.get_classe_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <p class="card-text">{{ transport.description|truncatechars:100 }}</p>
+                        
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-map-marker-alt me-2"></i> Destination</span>
+                                <strong>{{ transport.arrival_city }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-clock me-2"></i> Départ</span>
+                                <span>{{ transport.departure_time|date:"d/m/Y H:i" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-money-bill-wave me-2"></i> Prix</span>
+                                <span class="badge bg-primary rounded-pill">{{ transport.price }} fcfa</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-chair me-2"></i> Places</span>
+                                <span class="badge {% if transport.available_seats > 0 %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                                    {{ transport.available_seats }} / {{ transport.capacity }}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'transport:reserve_transport' transport.id %}" 
+                               class="btn btn-success {% if transport.available_seats == 0 %}disabled{% endif %}">
+                                <i class="fas fa-ticket-alt me-1"></i> Réserver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination mb-3">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" class="btn btn-link" title="Première page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-link" title="Page précédente">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-link" title="Page suivante">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-link" title="Dernière page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div>
+                    <h4 class="alert-heading">Aucun transport trouvé</h4>
+                    <p class="mb-0">Aucun transport ne correspond à vos critères de recherche.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

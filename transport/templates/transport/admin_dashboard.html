@@ -1,0 +1,38 @@
+{% extends 'transports/base.html' %}
+<link rel="stylesheet" href="{% static 'transport/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'transport/css/reservation.css' %}">
+
+
+{% block title %}Tableau de bord Admin{% endblock %}
+
+{% block content %}
+<h1>Tableau de bord Admin</h1>
+
+<h2>Transports</h2>
+<ul class="transport-list">
+    {% for transport in transports %}
+        <li class="transport-item">
+            <h3>{{ transport.name }} ({{ transport.get_type_display() }})</h3>
+            <p>Classe : {{ transport.get_classe_display() }}</p>
+            <p>Destination : {{ transport.destination }}</p>
+            <p>Départ : {{ transport.departure_time }}</p>
+            <p>Arrivée : {{ transport.arrival_time }}</p>
+            <p>Prix : {{ transport.price }} €</p>
+            <p>Places disponibles : {{ transport.available_seats }}</p>
+        </li>
+    {% endfor %}
+</ul>
+
+<h2>Réservations</h2>
+<ul class="reservation-list">
+    {% for reservation in reservations %}
+        <li class="reservation-item">
+            <h3>{{ reservation.transport.name }}</h3>
+            <p>Client : {{ reservation.client.username }}</p>
+            <p>Date de réservation : {{ reservation.reservation_date }}</p>
+            <p>Nombre de places : {{ reservation.number_of_seats }}</p>
+            <p>Noms des passagers : {{ reservation.passenger_names }}</p>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}
