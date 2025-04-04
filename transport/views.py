@@ -1,18 +1,37 @@
-from django.core.paginator import Paginator
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from decimal import Decimal
+from django import forms
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
-from .models import Transport, Reservation, Payment
-from .forms import ReservationForm
+from .models import Payment, Reservation, Transport
+from .forms import ReservationForm, TransportForm
+import stripe
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @login_required
 def transport_list(request):
-    transports = Transport.objects.all().order_by('departure_time')
-    
-    # Pagination
-    paginator = Paginator(transports, 6)  # Afficher 6 transports par page
+    transports = Transport.objects.filter(
+        available_seats__gt=0,
+        departure_time__gte=timezone.now()
+    ).order_by('departure_time')
+
+    transport_type = request.GET.get('type')
+    if transport_type:
+        transports = transports.filter(type=transport_type)
+
+    transport_classe = request.GET.get('classe')
+    if transport_classe:
+        transports = transports.filter(classe=transport_classe)
+
+    paginator = Paginator(transports, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -20,49 +39,71 @@ def transport_list(request):
         'page_obj': page_obj,
         'type_choices': Transport.TRANSPORT_TYPES,
         'classe_choices': Transport.TRANSPORT_CLASSES,
-        'selected_type': request.GET.get('type', ''),
-        'selected_classe': request.GET.get('classe', ''),
+        'selected_type': transport_type or '',
+        'selected_classe': transport_classe or '',
     }
     return render(request, 'transport/transport_list.html', context)
 
 @login_required
 def transport_detail(request, transport_id):
     transport = get_object_or_404(Transport, id=transport_id)
+    can_reserve = transport.available_seats > 0
+
     return render(request, 'transport/transport_detail.html', {
         'transport': transport,
-        'can_reserve': transport.available_seats > 0
+        'can_reserve': can_reserve
     })
 
 @login_required  
+@transaction.atomic  
 def reserve_transport(request, transport_id):  
     transport = get_object_or_404(Transport, id=transport_id)
+    
+    if transport.available_seats <= 0:
+        messages.error(request, "Ce transport est complet.")
+        return redirect('transport:transport_detail', transport_id=transport.id)
     
     if request.method == 'POST':  
         form = ReservationForm(request.POST)
         if form.is_valid():  
-            reservation = form.save(commit=False)
-            reservation.client = request.user
-            reservation.transport = transport
-            reservation.total_price = reservation.number_of_seats * transport.price
-            
-            # Check available seats
-            if reservation.number_of_seats > transport.available_seats:
-                messages.error(request, f"Seulement {transport.available_seats} places disponibles.")
-                return redirect('transport:reserve_transport', transport_id=transport.id)
+            try:
+                reservation = form.save(commit=False)
+                reservation.client = request.user
+                reservation.transport = transport
+                reservation.status = 'pending'
+                reservation.departure_time = transport.departure_time  
+                reservation.arrival_time = transport.arrival_time
+                
+                # Calcul MANUEL du prix avant sauvegarde
+                reservation.total_price = Decimal(reservation.number_of_seats) * transport.price
 
-            reservation.save()
+                if reservation.number_of_seats > transport.available_seats:
+                    messages.error(request, f"Seulement {transport.available_seats} places disponibles")
+                    return redirect('transport:reserve_transport', transport_id=transport.id)
 
-            transport.available_seats -= reservation.number_of_seats
-            transport.save()
+                with transaction.atomic():
+                    reservation.save()  # Appellera save() du modèle
+                    transport.available_seats -= reservation.number_of_seats
+                    transport.save()
 
-            messages.success(request, "Réservation créée avec succès!")
-            return redirect('transport:create_payment', reservation_id=reservation.id)
+                messages.success(request, "Réservation créée avec succès!")
+                return redirect('transport:create_payment', reservation_id=reservation.id)
+
+            except Exception as e:
+                messages.error(request, f"Erreur lors de la création: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                messages.error(request, f"{field}: {', '.join(errors)}")
     else:
-        form = ReservationForm()
+        form = ReservationForm(initial={
+            'number_of_seats': 1,
+            'passenger_names': request.user.get_full_name() or request.user.username
+        })
 
     return render(request, 'transport/reserve_transport.html', {
         'transport': transport,
         'form': form,
+        'can_reserve': transport.available_seats > 0
     })
 
 
@@ -72,41 +113,66 @@ def reservation_detail(request, reservation_id):
     return render(request, 'transport/reservation_detail.html', {
         'reservation': reservation
     })
-    
-    
+
 @login_required
+@transaction.atomic
 def update_reservation(request, reservation_id):
     reservation = get_object_or_404(Reservation, id=reservation_id, client=request.user)
+    transport = reservation.transport
+
     if request.method == 'POST':
-        form = ReservationForm(request.POST, instance=reservation)
+        form = ReservationForm(request.POST, instance=reservation, transport=transport)
         if form.is_valid():
-            form.save()
+            old_seats = reservation.number_of_seats
+            new_reservation = form.save(commit=False)
+            new_seats = new_reservation.number_of_seats
+            seat_diff = new_seats - old_seats
+
+            if seat_diff > 0 and seat_diff > transport.available_seats:
+                messages.error(request, f"Nombre de places insuffisant. Il reste seulement {transport.available_seats} place(s).")
+                return render(request, 'transport/update_reservation.html', {
+                    'form': form,
+                    'reservation': reservation
+                })
+
+            # Mettre à jour le nombre de places dans le transport
+            transport.available_seats -= seat_diff
+            transport.save()
+
+            new_reservation.total_price = new_seats * transport.price
+            new_reservation.save()
+
             messages.success(request, "La réservation a été mise à jour avec succès.")
             return redirect('transport:my_reservations')
     else:
-        form = ReservationForm(instance=reservation)
+        form = ReservationForm(instance=reservation, transport=transport)
 
     return render(request, 'transport/update_reservation.html', {
         'form': form,
         'reservation': reservation
     })
-    
-    
+
+
 @login_required
+@transaction.atomic
 def cancel_reservation(request, reservation_id):
     reservation = get_object_or_404(Reservation, id=reservation_id, client=request.user)
+
+    if reservation.status == 'cancelled':
+        messages.warning(request, "Cette réservation a déjà été annulée.")
+        return redirect('transport:my_reservations')
 
     if request.method == 'POST':
         if reservation.cancel():
             messages.success(request, "Réservation annulée avec succès.")
-            return redirect('transport:my_reservations')
         else:
-            messages.error(request, "Échec de l'annulation de la réservation.")
+            messages.error(request, "Échec de l'annulation de la réservation. Veuillez réessayer.")
+        return redirect('transport:my_reservations')
+
     return render(request, 'transport/cancel_reservation.html', {
         'reservation': reservation
     })
-    
-    
+
 @login_required
 def create_payment(request, reservation_id):
     reservation = get_object_or_404(Reservation, id=reservation_id)
@@ -115,33 +181,30 @@ def create_payment(request, reservation_id):
         'total_amount': reservation.total_amount
     })
 
-@require_POST
+
+@login_required
 def process_payment(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, client=request.user)
-    payment_method = request.POST.get('payment_method')
+    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
+    allowed_methods = [method[0] for method in Payment.PAYMENT_METHODS]
 
-    if payment_method not in ['orange', 'mtn', 'paypal']:
-        messages.error(request, "Méthode de paiement non valide.")
-        return redirect('transport:create_payment', reservation_id=reservation.id)
+    if request.method == 'POST':
+        payment_method = request.POST.get('payment_method')
 
-    try:
-        # Simuler le processus de paiement
-        payment = Payment.objects.create(
+        if payment_method not in allowed_methods:
+            messages.error(request, 'Méthode de paiement invalide.')
+            return redirect('transport:process_payment', reservation_id=reservation.id)
+
+        Payment.objects.create(
+            user=request.user,
             reservation=reservation,
-            method=payment_method,
-            amount=reservation.total_amount,
-            status='completed'
+            amount=reservation.total_price,
+            payment_method=payment_method
         )
-        
-        reservation.status = 'confirmed'
-        reservation.save()
 
-        messages.success(request, "Paiement réussi!")
-        return redirect('transport:payment_success', reservation_id=reservation.id)
+        messages.success(request, 'Paiement effectué avec succès.')
+        return redirect('transport:my_reservations')
 
-    except Exception as e:
-        messages.error(request, f"Erreur lors du paiement: {str(e)}")
-        return redirect('transport:payment_cancel', reservation_id=reservation.id)
+    return render(request, 'transport/process_payment.html', {'reservation': reservation})
 
 @login_required
 def payment_success(request, reservation_id):
@@ -165,21 +228,18 @@ def my_reservations(request):
     return render(request, 'transport/my_reservations.html', {
         'reservations': reservations,
     })
-    
-
-from .forms import TransportForm
 
 def add_transport(request):
     if request.method == 'POST':
         form = TransportForm(request.POST)
         if form.is_valid():
             form.save()
-        return redirect('accounts:admin_dashboard')  # Utilisez 'accounts:' partout
+            messages.success(request, "Transport ajouté avec succès.")
+        return redirect('accounts:admin_dashboard')
     else:
         form = TransportForm()
     
     return render(request, 'transport/add_transport.html', {'form': form})
-
 
 def edit_transport(request, id):
     transport = get_object_or_404(Transport, id=id)
@@ -188,14 +248,12 @@ def edit_transport(request, id):
         form = TransportForm(request.POST, instance=transport)
         if form.is_valid():
             form.save()
-        return redirect('accounts:admin_dashboard')  # Utilisez 'accounts:' partout
+            messages.success(request, "Transport mis à jour avec succès.")
+        return redirect('accounts:admin_dashboard')
     else:
         form = TransportForm(instance=transport)
     
     return render(request, 'transport/edit_transport.html', {'form': form, 'transport': transport})
-
-
-from django.contrib import messages
 
 def delete_transport(request, id):
     transport = get_object_or_404(Transport, id=id)
@@ -203,6 +261,6 @@ def delete_transport(request, id):
     if request.method == 'POST':
         transport.delete()
         messages.success(request, "Transport supprimé avec succès.")
-    return redirect('accounts:admin_dashboard')  # Utilisez 'accounts:' partout
+        return redirect('accounts:admin_dashboard')
     
     return render(request, 'transport/delete_transport.html', {'transport': transport})

@@ -1,11 +1,11 @@
-from datetime import timezone
 from decimal import Decimal
 from venv import logger
-from django.db import models, transaction
-from django.db.models import F
-from django.contrib.auth.models import User
+from django.db import models
 from django.core.validators import MinValueValidator
+from django.contrib.auth.models import User
 from django.forms import ValidationError
+from django.db import transaction
+from django.db.models import F
 
 class Transport(models.Model):
     TRANSPORT_TYPES = [
@@ -34,28 +34,27 @@ class Transport(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     departure_city = models.CharField(max_length=100)
     arrival_city = models.CharField(max_length=100)
-    
 
     class Meta:
         ordering = ['departure_time']
         verbose_name = "Transport"
         verbose_name_plural = "Transports"
 
-    def __str__(self):
-        return f"{self.get_type_display()} - {self.name}"
+    
+    def clean(self):
+        if self.departure_time >= self.arrival_time:
+            raise ValidationError("L'heure de départ doit être antérieure à l'heure d'arrivée.")
+        if self.available_seats > self.capacity:
+            raise ValidationError("Le nombre de places disponibles ne peut pas dépasser la capacité.")
 
     def save(self, *args, **kwargs):
-        if not self.available_seats:
-            self.available_seats = self.capacity
+        self.full_clean()
         super().save(*args, **kwargs)
 
-    def clean(self):
-        """Validation personnalisée pour le transport"""
-        if self.arrival_time and self.departure_time:
-            if self.arrival_time <= self.departure_time:
-                raise ValidationError("L'heure d'arrivée doit être après l'heure de départ.")
-        super().clean()
-        
+    def __str__(self):
+        return f"{self.departure_city} -> {self.arrival_city}"
+
+# Modèle Reservation
 class Reservation(models.Model):
     RESERVATION_STATUS = [
         ('pending', 'En attente'),
@@ -86,46 +85,43 @@ class Reservation(models.Model):
         verbose_name = "Réservation"
         verbose_name_plural = "Réservations"
 
-    def __str__(self):
-        return f"Réservation #{self.id} - {self.client.username}"
+    def clean(self):
+        try:
+            if self.transport and self.number_of_seats:
+                if self.number_of_seats > self.transport.available_seats:
+                    raise ValidationError("Pas assez de places disponibles.")
+        except self.__class__.transport.RelatedObjectDoesNotExist:
+            # L'objet n'a pas encore de transport défini : on skippe
+            pass
 
-    @property
-    def is_paid(self):
-        return hasattr(self, 'payment') and self.payment.status == 'completed'
+
 
     @property
     def total_amount(self):
-        """Retourne le montant total (propriété seulement)"""
-        if self.total_price is not None:
-            return self.total_price
-        return Decimal(self.number_of_seats) * self.transport.price
-
-    def clean(self):
-        """Validation personnalisée pour la réservation"""
-        if self.arrival_time and self.departure_time:
-            if self.arrival_time <= self.departure_time:
-                raise ValidationError("L'heure d'arrivée doit être après l'heure de départ.")
-        super().clean()
+        return self.number_of_seats * self.transport.price
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        if self.transport and self.total_price is None:
+            self.total_price = self.total_amount
         super().save(*args, **kwargs)
 
+
+    def __str__(self):
+        return f"Réservation de {self.user.username} - {self.transport}"
+
     def cancel(self):
-        """Annulation atomique de la réservation"""
         if self.status == 'cancelled':
             return False
 
         try:
             with transaction.atomic():
-                # Version optimiste de la mise à jour
                 updated = Transport.objects.filter(
                     id=self.transport.id
                 ).update(
                     available_seats=F('available_seats') + self.number_of_seats
                 )
 
-                if not updated:
+                if updated == 0:
                     raise ValueError("Échec de la mise à jour du transport")
 
                 self.status = 'cancelled'
@@ -136,6 +132,7 @@ class Reservation(models.Model):
             logger.error(f"Échec de l'annulation de la réservation {self.id}: {str(e)}")
             return False
 
+# Modèle Payment
 class Payment(models.Model):
     PAYMENT_METHODS = [
         ('orange', 'Orange Money'),

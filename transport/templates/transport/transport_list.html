@@ -7,8 +7,23 @@
 <div class="container">
     <h1 class="my-4">Transports Disponibles</h1>
 
+    <!-- Messages système -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            <div class="d-flex align-items-center">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                <div>{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Filtres -->
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm">
         <div class="card-header bg-primary text-white">
             <i class="fas fa-filter me-2"></i>Filtrer les résultats
         </div>
@@ -17,7 +32,7 @@
                 <div class="col-md-4">
                     <label for="type" class="form-label">Type de transport</label>
                     <select name="type" id="type" class="form-select">
-                        <option value="">Types</option>
+                        <option value="">Tous les types</option>
                         {% for value, label in type_choices %}
                             <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>
                                 {{ label }}
@@ -29,7 +44,7 @@
                 <div class="col-md-4">
                     <label for="classe" class="form-label">Classe</label>
                     <select name="classe" id="classe" class="form-select">
-                        <option value="">Classes</option>
+                        <option value="">Toutes les classes</option>
                         {% for value, label in classe_choices %}
                             <option value="{{ value }}" {% if selected_classe == value %}selected{% endif %}>
                                 {{ label }}
@@ -39,11 +54,11 @@
                 </div>
                 
                 <div class="col-md-4 d-flex align-items-end">
-                    <div class="d-grid gap-2 d-md-flex">
-                        <button type="submit" class="btn btn-primary me-md-2">
+                    <div class="d-grid gap-2 d-md-flex w-100">
+                        <button type="submit" class="btn btn-primary me-md-2 flex-grow-1">
                             <i class="fas fa-search me-1"></i> Filtrer
                         </button>
-                        <a href="{% url 'transport:transport_list' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'transport:transport_list' %}" class="btn btn-outline-secondary flex-grow-1">
                             <i class="fas fa-undo me-1"></i> Réinitialiser
                         </a>
                     </div>
@@ -57,48 +72,65 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             {% for transport in page_obj %}
             <div class="col">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm transport-card {% if transport.available_seats == 0 %}transport-full{% endif %}">
                     <div class="card-header 
-                        {% if transport.classe == 'vip' %}bg-warning
-                        {% elif transport.classe == 'luxe' %}bg-danger
-                        {% else %}bg-primary{% endif %} text-white">
-                        <h5 class="card-title mb-1">{{ transport.name }}</h5>
-                        <div class="d-flex justify-content-between small">
+                        {% if transport.classe == 'vip' %}bg-warning text-dark
+                        {% elif transport.classe == 'luxe' %}bg-danger text-white
+                        {% else %}bg-primary text-white{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title mb-1">{{ transport.name }}</h5>
+                            <span class="badge {% if transport.available_seats > 0 %}bg-light text-dark{% else %}bg-dark{% endif %}">
+                                {% if transport.available_seats > 0 %}
+                                    {{ transport.available_seats }} place(s)
+                                {% else %}
+                                    Complet
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between small mt-2">
                             <span><i class="fas fa-{{ transport.type }} me-1"></i> {{ transport.get_type_display }}</span>
                             <span>{{ transport.get_classe_display }}</span>
                         </div>
                     </div>
                     
                     <div class="card-body">
-                        <p class="card-text">{{ transport.description|truncatechars:100 }}</p>
+                        <p class="card-text">{{ transport.description|truncatechars:120 }}</p>
                         
                         <ul class="list-group list-group-flush mb-3">
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-map-marker-alt me-2"></i> Destination</span>
+                                <span><i class="fas fa-map-marker-alt me-2 text-primary"></i> Départ</span>
+                                <strong>{{ transport.departure_city }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-map-marker-alt me-2 text-success"></i> Arrivée</span>
                                 <strong>{{ transport.arrival_city }}</strong>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-clock me-2"></i> Départ</span>
+                                <span><i class="fas fa-clock me-2 text-info"></i> Départ</span>
                                 <span>{{ transport.departure_time|date:"d/m/Y H:i" }}</span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-money-bill-wave me-2"></i> Prix</span>
-                                <span class="badge bg-primary rounded-pill">{{ transport.price }} fcfa</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-chair me-2"></i> Places</span>
-                                <span class="badge {% if transport.available_seats > 0 %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
-                                    {{ transport.available_seats }} / {{ transport.capacity }}
-                                </span>
+                                <span><i class="fas fa-money-bill-wave me-2 text-success"></i> Prix</span>
+                                <span class="fw-bold">{{ transport.price|floatformat:"0" }} FCFA</span>
                             </li>
                         </ul>
                     </div>
                     
-                    <div class="card-footer bg-transparent">
+                    <div class="card-footer bg-transparent border-top-0 pt-0">
                         <div class="d-grid gap-2">
-                            <a href="{% url 'transport:reserve_transport' transport.id %}" 
-                               class="btn btn-success {% if transport.available_seats == 0 %}disabled{% endif %}">
-                                <i class="fas fa-ticket-alt me-1"></i> Réserver
+                            {% if transport.available_seats > 0 %}
+                                <a href="{% url 'transport:reserve_transport' transport.id %}" 
+                                   class="btn btn-success btn-sm">
+                                    <i class="fas fa-ticket-alt me-1"></i> Réserver maintenant
+                                </a>
+                            {% else %}
+                                <button class="btn btn-secondary btn-sm" disabled>
+                                    <i class="fas fa-times-circle me-1"></i> Complet
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'transport:transport_detail' transport.id %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-info-circle me-1"></i> Voir détails
                             </a>
                         </div>
                     </div>
@@ -108,41 +140,81 @@
         </div>
 
         <!-- Pagination -->
-        <div class="pagination mb-3">
-            <span class="step-links">
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
-                    <a href="?page=1" class="btn btn-link" title="Première page">
-                        <i class="fas fa-angle-double-left"></i>
-                    </a>
-                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-link" title="Page précédente">
-                        <i class="fas fa-angle-left"></i>
-                    </a>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="Première">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Précédente">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
                 {% endif %}
 
-                <span class="current">
-                    Page {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
-                </span>
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-link" title="Page suivante">
-                        <i class="fas fa-angle-right"></i>
-                    </a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-link" title="Dernière page">
-                        <i class="fas fa-angle-double-right"></i>
-                    </a>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Suivante">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Dernière">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
                 {% endif %}
-            </span>
-        </div>
+            </ul>
+        </nav>
     {% else %}
-        <div class="alert alert-warning">
+        <div class="alert alert-warning shadow-sm">
             <div class="d-flex align-items-center">
                 <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
                 <div>
                     <h4 class="alert-heading">Aucun transport trouvé</h4>
-                    <p class="mb-0">Aucun transport ne correspond à vos critères de recherche.</p>
+                    <p class="mb-0">Aucun transport ne correspond à vos critères de recherche. Essayez d'élargir vos filtres.</p>
                 </div>
             </div>
         </div>
     {% endif %}
 </div>
+
+<style>
+    .transport-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .transport-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .transport-full {
+        opacity: 0.9;
+    }
+    .transport-full .card-header {
+        position: relative;
+    }
+    .transport-full .card-header::after {
+        content: "COMPLET";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-15deg);
+        font-size: 2rem;
+        font-weight: bold;
+        color: rgba(255,255,255,0.2);
+        z-index: 1;
+    }
+</style>
+
 {% endblock %}
