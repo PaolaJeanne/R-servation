@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from .forms import SignUpForm, LoginForm
+from django.contrib.auth.decorators import login_required
+
 
 User = get_user_model()
 
@@ -78,3 +80,6 @@ def user_logout(request):
 
 
 
+@login_required
+def admin_dashboard(request):
+    return render(request, 'admin/dashboard.html')  # Assurez-vous que le template existe
