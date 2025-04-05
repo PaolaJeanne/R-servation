@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -11,64 +12,135 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar élargie avec tous les éléments à droite -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'accounts:acceuil' %}">
-                <i class="fas fa-bus me-2"></i>Agence de Transport
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="mainNavbar">
-                <ul class="navbar-nav ms-auto">  <!-- ms-auto pour aligner à droite -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:acceuil' %}">
-                            <i class="fas fa-home me-1"></i> Accueil
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transport:transport_list' %}">
-                            <i class="fas fa-list me-1"></i> Transports
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transport:my_reservations' %}">
-                            <i class="fas fa-calendar-check me-1"></i> Réservations
-                        </a>
-                    </li>
 
-                    {% if user.is_authenticated %}
-                    <!-- Menu utilisateur (visible seulement quand connecté) -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userMenu" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> {{ user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'transport:my_reservations' %}">
-                                <i class="fas fa-calendar-alt me-1"></i> Mes réservations</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
-                                <i class="fas fa-sign-out-alt me-1"></i> Déconnexion</a></li>
+    {% if request.user.is_authenticated %}
+        {% if request.user.is_staff %}
+            <!-- Navbar Admin -->
+            <nav class="site-navbar navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li><a class="nav-link" href="{% url 'admin_dashboard' %}">Tableau de bord</a></li>
+                        <li><a class="nav-link" href="{% url 'transport:add_transport' %}">Ajouter un transport</a></li>
+                        <li><a class="nav-link" href="{% url 'transport:add_reservation' %}">Ajouter une réservation</a></li>
+                    </ul>
+
+                    <!-- Menu déroulant utilisateur -->
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userMenu" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                    <i class="fas fa-sign-out-alt me-1"></i> Déconnexion</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        {% else %}
+            <!-- Navbar pour les utilisateurs non-admin -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="{% url 'accounts:acceuil' %}">
+                        <i class="fas fa-bus me-2"></i>Agence de Transport
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="mainNavbar">
+                        <ul class="navbar-nav ms-auto">  
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:acceuil' %}">
+                                    <i class="fas fa-home me-1"></i> Accueil
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'transport:transport_list' %}">
+                                    <i class="fas fa-list me-1"></i> Transports
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'transport:my_reservations' %}">
+                                    <i class="fas fa-calendar-check me-1"></i> Réservations
+                                </a>
+                            </li>
+
+                            {% if user.is_authenticated %}
+                            <!-- Menu utilisateur (visible seulement quand connecté) -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userMenu" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i> {{ user.username }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'transport:my_reservations' %}">
+                                        <i class="fas fa-calendar-alt me-1"></i> Mes réservations</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Déconnexion</a></li>
+                                </ul>
+                            </li>
+                            {% else %}
+                            <!-- Liens de connexion (visible seulement quand déconnecté) -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:login' %}">
+                                    <i class="fas fa-sign-in-alt me-1"></i> Connexion
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:signup' %}">
+                                    <i class="fas fa-user-plus me-1"></i> Inscription
+                                </a>
+                            </li>
+                            {% endif %}
                         </ul>
-                    </li>
-                    {% else %}
-                    <!-- Liens de connexion (visible seulement quand déconnecté) -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:login' %}">
-                            <i class="fas fa-sign-in-alt me-1"></i> Connexion
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:signup' %}">
-                            <i class="fas fa-user-plus me-1"></i> Inscription
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
+                    </div>
+                </div>
+            </nav>
+        {% endif %}
+    {% else %}
+        <!-- Navbar pour les utilisateurs non authentifiés -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{% url 'accounts:acceuil' %}">
+                    <i class="fas fa-bus me-2"></i>Agence de Transport
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav ms-auto">  
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:acceuil' %}">
+                                <i class="fas fa-home me-1"></i> Accueil
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'transport:transport_list' %}">
+                                <i class="fas fa-list me-1"></i> Transports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'transport:my_reservations' %}">
+                                <i class="fas fa-calendar-check me-1"></i> Réservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i> Connexion
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:signup' %}">
+                                <i class="fas fa-user-plus me-1"></i> Inscription
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    {% endif %}
 
     <!-- Contenu principal -->
     <main class="container my-5">
@@ -81,8 +153,7 @@
             {% endfor %}
         {% endif %}
         
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->

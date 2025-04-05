@@ -11,7 +11,8 @@ class Transport(models.Model):
     TRANSPORT_TYPES = [  
     ('minibus', 'Minibus'),  
     ('microbus', 'Microbus'),  
-    ('urbain', 'Urbain'),  # Ajout de la valeur 'urbain'  
+    ('urbain', 'Urbain'),  
+    ('articuled_bus', 'Bus articulé'), 
     ('coach_bus', 'Bus grand tourisme'),  
     ('articulated_bus', 'Bus articulé'),  
     ('double_decker', 'Bus à étage'),  
@@ -22,6 +23,8 @@ class Transport(models.Model):
         ('commun', 'Commun'),
         ('vip', 'VIP'),
         ('luxe', 'Luxe'),
+        ('eco', 'Economique'),
+        ('premium', 'Premium'),
         ('standard', 'Standard'),  # Ajout de la valeur 'standard'  
 
     ]
