@@ -8,19 +8,22 @@ from django.db import transaction
 from django.db.models import F
 
 class Transport(models.Model):
-    TRANSPORT_TYPES = [
-        ('minibus', 'Minibus'),
-        ('microbus', 'Microbus'),
-        ('standard_bus', 'Bus standard'),
-        ('coach_bus', 'Bus grand tourisme'),
-        ('articulated_bus', 'Bus articulé'),
-        ('double_decker', 'Bus à étage'),
-        ('autre', 'Autre type de bus'),
-    ]
+    TRANSPORT_TYPES = [  
+    ('minibus', 'Minibus'),  
+    ('microbus', 'Microbus'),  
+    ('urbain', 'Urbain'),  # Ajout de la valeur 'urbain'  
+    ('coach_bus', 'Bus grand tourisme'),  
+    ('articulated_bus', 'Bus articulé'),  
+    ('double_decker', 'Bus à étage'),  
+    ('autre', 'Autre type de bus'),  
+]  
+    
     TRANSPORT_CLASSES = [
         ('commun', 'Commun'),
         ('vip', 'VIP'),
         ('luxe', 'Luxe'),
+        ('standard', 'Standard'),  # Ajout de la valeur 'standard'  
+
     ]
 
     name = models.CharField(max_length=100)
@@ -99,6 +102,11 @@ class Reservation(models.Model):
     @property
     def total_amount(self):
         return self.number_of_seats * self.transport.price
+    
+    @property
+    def is_paid(self):
+        return hasattr(self, 'payment') and self.payment.status == 'completed'
+
 
     def save(self, *args, **kwargs):
         if self.transport and self.total_price is None:

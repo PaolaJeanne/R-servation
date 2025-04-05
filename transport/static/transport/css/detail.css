@@ -1,78 +1,161 @@
-:root {
-    --primary-color: #4361ee;
-    --secondary-color: #3a0ca3;
-    --text-color: #2b2d42;
-    --light-gray: #f8f9fa;
-    --border-color: #dee2e6;
-}
-
-.transport-detail {
-    max-width: 800px;
+/* Style général pour le container de la page */
+.reservation-container {
+    max-width: 1200px;
     margin: 2rem auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
 }
 
-.transport-detail h1 {
-    color: var(--primary-color);
+.reservation-title {
     text-align: center;
-    margin-bottom: 1.5rem;
     font-size: 2rem;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.detail-item {
+/* Section "Pas de réservation" */
+.no-reservations {
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.no-reservations p {
+    margin-bottom: 1rem;
+}
+
+.no-reservations .btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 1.2rem;
+}
+
+/* Grid pour afficher les réservations */
+.reservation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Carte de réservation */
+.reservation-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.reservation-card.unpaid {
+    border-left: 5px solid #f39c12;
+}
+
+.card-header {
+    background-color: #f8f8f8;
     padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #ddd;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.card-header .badge {
+    margin-left: 1rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* Corps de la carte */
+.card-body {
+    padding: 1rem;
+    background-color: #f9f9f9;
+}
+
+.reservation-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1rem;
 }
 
 .detail-label {
-    font-weight: 600;
-    color: var(--text-color);
-    display: block;
-    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #555;
 }
 
 .detail-value {
-    color: var(--text-color);
+    color: #333;
 }
 
-.btn-reserve {
-    display: inline-block;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 0.75rem 1.5rem;
+/* Footer de la carte */
+.card-footer {
+    padding: 1rem;
+    background-color: #f8f8f8;
+    display: flex;
+    justify-content: space-between;
+}
+
+.card-footer .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
     border-radius: 4px;
-    text-decoration: none;
-    font-weight: 500;
     text-align: center;
-    transition: all 0.3s ease;
+}
+
+.btn-pay {
+    background-color: #28a745;
+    color: white;
     border: none;
-    cursor: pointer;
-    margin-top: 1rem;
 }
 
-.btn-reserve:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.btn-pay:hover {
+    background-color: #218838;
 }
 
+.btn-update {
+    background-color: #007bff;
+    color: white;
+    border: none;
+}
+
+.btn-update:hover {
+    background-color: #0056b3;
+}
+
+.btn-cancel {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
+
+.btn-cancel:hover {
+    background-color: #c82333;
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
-    .transport-detail {
-        padding: 1.5rem;
-        margin: 1rem;
-    }
-    
-    .detail-grid {
+    .reservation-grid {
         grid-template-columns: 1fr;
     }
 }

@@ -1,3 +1,4 @@
+
 from decimal import Decimal
 from django import forms
 from django.conf import settings
@@ -70,7 +71,7 @@ def reserve_transport(request, transport_id):
                 reservation = form.save(commit=False)
                 reservation.client = request.user
                 reservation.transport = transport
-                reservation.status = 'pending'
+                reservation.status = 'pendding'  # Utilisation de la constante
                 reservation.departure_time = transport.departure_time  
                 reservation.arrival_time = transport.arrival_time
                 
@@ -105,7 +106,6 @@ def reserve_transport(request, transport_id):
         'form': form,
         'can_reserve': transport.available_seats > 0
     })
-
 
 @login_required
 def reservation_detail(request, reservation_id):
@@ -152,13 +152,12 @@ def update_reservation(request, reservation_id):
         'reservation': reservation
     })
 
-
 @login_required
 @transaction.atomic
 def cancel_reservation(request, reservation_id):
     reservation = get_object_or_404(Reservation, id=reservation_id, client=request.user)
 
-    if reservation.status == 'cancelled':
+    if reservation.status == 'cancel':  # Utilisation de la constante
         messages.warning(request, "Cette réservation a déjà été annulée.")
         return redirect('transport:my_reservations')
 
@@ -178,33 +177,56 @@ def create_payment(request, reservation_id):
     reservation = get_object_or_404(Reservation, id=reservation_id)
     return render(request, 'transport/create_payment.html', {
         'reservation': reservation,
-        'total_amount': reservation.total_amount
+        'total_amount': reservation.total_price
     })
-
 
 @login_required
 def process_payment(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
-    allowed_methods = [method[0] for method in Payment.PAYMENT_METHODS]
+    reservation = get_object_or_404(Reservation, id=reservation_id, client=request.user)
 
+    # Vérifier si un paiement existe déjà pour cette réservation
+    if hasattr(reservation, 'payment') and reservation.payment.status == 'completed':
+        messages.error(request, 'Un paiement a déjà été effectué pour cette réservation.')
+        return redirect('transport:my_reservations')
+
+    # Si le formulaire est soumis (POST)
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
 
-        if payment_method not in allowed_methods:
+        # Vérifier si la méthode de paiement est valide
+        if payment_method not in dict(Payment.PAYMENT_METHODS).keys():
             messages.error(request, 'Méthode de paiement invalide.')
             return redirect('transport:process_payment', reservation_id=reservation.id)
 
-        Payment.objects.create(
-            user=request.user,
-            reservation=reservation,
-            amount=reservation.total_price,
-            payment_method=payment_method
-        )
+        # Créer un objet Payment pour la réservation si aucun paiement n'a été effectué
+        if not hasattr(reservation, 'payment'):
+            payment = Payment.objects.create(
+                reservation=reservation,
+                method=payment_method,
+                amount=reservation.total_price,
+                status='pending'  # Initialement en attente
+            )
+        else:
+            # Si un paiement existe, vous pouvez le mettre à jour si nécessaire
+            payment = reservation.payment
+            payment.method = payment_method
+            payment.amount = reservation.total_price
+            payment.status = 'pending'
+            payment.save()
 
-        messages.success(request, 'Paiement effectué avec succès.')
-        return redirect('transport:my_reservations')
+        # Simulation du paiement (ici vous pouvez intégrer avec un service réel comme Stripe, etc.)
+        payment.status = 'completed'  # Paiement validé
+        payment.save()
 
+        # Mise à jour du statut de la réservation après le paiement
+        reservation.status = 'confirmed'  # La réservation est maintenant confirmée
+        reservation.save()
+
+        messages.success(request, 'Paiement effectué avec succès et réservation confirmée.')
+        return redirect('transport:payment_success', reservation_id=reservation.id)  
     return render(request, 'transport/process_payment.html', {'reservation': reservation})
+
+   
 
 @login_required
 def payment_success(request, reservation_id):
@@ -224,10 +246,17 @@ def payment_cancel(request, reservation_id):
 
 @login_required
 def my_reservations(request):
-    reservations = request.user.reservations.exclude(status='cancelled').select_related('transport')
-    return render(request, 'transport/my_reservations.html', {
+    reservations = request.user.reservations.exclude(status='pendding').select_related('transport')
+    
+    # Actualiser les statuts des réservations
+    for reservation in reservations:
+        reservation.refresh_from_db()
+
+    return render(request, 'transport/my_reservation.html', {
         'reservations': reservations,
+        'now': timezone.now()
     })
+
 
 def add_transport(request):
     if request.method == 'POST':
